@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <title>inotify; build</title>
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css"></link>
+        <link rel="stylesheet" type="text/css" href="../css/base.css"></link></head>
+
+    <body>
+        <div id="navbar">
+            <ul>
+<li><a href="../index.html">home</a></li>
+<li><a href="../projects.html">projects</a></li>
+<li><a href="../posts.html">ramblings</a></li>
+<li><a href="../about.html">about</a></li>
+</ul></div>
+
+        <div id="content">
+        <h1>inotify; build</h1>
+
+<p>by <em>Mike</em> on <strong>2012-10-11</strong></p>
+
+<p>A few months ago, when I started using Scala more seriously, I familiarised myself with <a href="http://www.scala-sbt.org">sbt</a> after seeing it touted as the recommended build tool here and there. Despite some grievances with this not-so-simple build tool, I did find one of its features rather handy: automatically executing compile or test actions whenever a file changed (quite similar to hakyll’s preview feature).</p>
+<p>In fact, I got used to this feature so much that I decided I needed it for other projects, like automatically running LaTeX for me, or updating <a href="http://ikiwiki.info/">ikiwiki</a>.</p>
+<p>It turns out this was fairly simple to implement with <a href="https://github.com/rvoicilas/inotify-tools/wiki">inotify-tools</a> doing all the heavy lifting, with regard to monitoring files for changes and generating appropriate events. All that remained was wrapping it up in a suitable script I called <code>monitor</code>, to only act on files that match a particular regular expression:</p>
+<pre class="sourceCode"><code class="sourceCode bash"><span class="co">#!/bin/zsh</span><br /><br /><span class="ot">TARGET=</span><span class="st">&quot;</span><span class="ot">$1</span><span class="st">&quot;</span><br /><span class="ot">PATTERN=</span><span class="st">&quot;</span><span class="ot">$2</span><span class="st">&quot;</span><br /><span class="ot">COMMAND=(</span><span class="st">&quot;</span><span class="ot">${@:3}</span><span class="st">&quot;</span><span class="ot">)</span><br /><br /><span class="kw">[[</span> <span class="ot">$#</span> <span class="ot">-lt</span> 3<span class="kw"> ]]</span> <span class="kw">&amp;&amp;</span> <span class="kw">{</span><br /> <span class="kw">echo</span> <span class="st">&quot;usage: </span><span class="ot">$0</span><span class="st"> &lt;watched-dir&gt; &lt;file-pattern&gt; &lt;command&gt;&quot;</span><br /> <span class="kw">exit</span> 1 <span class="kw">}</span><br /><br /><span class="ot">EVENTS=(</span>modify delete<span class="ot">)</span><br /><br />inotifywait -r -m -e $<span class="dt">{(j.,.)EVENTS}</span> --format <span class="st">&quot;%w%f&quot;</span> <span class="ot">$TARGET</span> <span class="kw">\</span><br /><span class="kw">|</span> <span class="kw">egrep</span> --line-buffered <span class="st">&quot;</span><span class="ot">$PATTERN</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="kw">while</span> <span class="kw">read</span> <span class="ot">file</span>; <span class="kw">do</span><br />  <span class="kw">echo</span> <span class="st">&quot;event: </span><span class="ot">$file</span><span class="st">&quot;</span><br />  <span class="ot">$COMMAND</span><br /><span class="kw">done</span></code></pre>
+<p>I could then run the following command to continuously build my ikiwiki:</p>
+<pre class="sourceCode"><code class="sourceCode bash">monitor path/to/wiki <span class="st">'\.mkdn$|\.mdwn$'</span> ikiwiki --setup ~/wiki.setup</code></pre>
+<p>or generate my LaTeX reports (given a suitable Makefile):</p>
+<pre class="sourceCode"><code class="sourceCode bash">monitor path/to/tex <span class="st">'\.tex$|\.bib$'</span> <span class="kw">make</span></code></pre>
+<p>The script is also available <a href="https://github.com/mpitid/scripts/">on github</a> as part of a collection of scripts I have found a use for from time to time.</p>
+<!--
+for an actual project
+rather than just messing around with tutorials etc.
+A slightly annoying aspect of moving to a new language is familiarising
+oneself with new tool chains to address old problems. In the case of
+Scala, [sbt](http://www.scala-sbt.org/) appears to be the de-facto build
+tool, 
+-->
+
+
+
+
+        <div id="powered">
+        <fieldset><legend>Powered by</legend>
+            <ul>
+                <li><a href="http://www.gnu.org">Free Software</a></li>
+                <li><a href="http://www.vim.org">Vim</a></li>
+                <li><a href="http://jaspervdj.be/hakyll/">Hakyll</a></li>
+                <li><a href="http://johnmacfarlane.net/pandoc/">Pandoc</a></li>
+                <li><a href="http://sass-lang.com">Sass</a></li>
+            </ul></div></div>
+
+    </body></html>
